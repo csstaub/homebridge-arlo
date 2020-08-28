@@ -170,7 +170,8 @@ class ArloBaseStationAccessory {
         this.accessory
             .getService(Service.AccessoryInformation)
             .setCharacteristic(Characteristic.Model, device.getModel())
-            .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
+            .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber())
+            .setCharacteristic(Characteristic.FirmwareRevision, '100.0.0');
 
         this.setupListeners();
         this.accessory.updateReachability(true);
