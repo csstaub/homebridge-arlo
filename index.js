@@ -158,6 +158,8 @@ class ArloBaseStationAccessory {
         this.accessory = accessory;
         this.device = device;
         this.log = log;
+	this.currentTarget = undefined;
+	this.currentState = undefined;
         
         config = config || {};
 
@@ -181,56 +183,24 @@ class ArloBaseStationAccessory {
             .on('set', this.setTargetState.bind(this));
     
         this.device.on(Arlo.ARMED, function() {
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                .updateValue(Characteristic.SecuritySystemTargetState.AWAY_ARM);
-    
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                .updateValue(Characteristic.SecuritySystemCurrentState.AWAY_ARM);
+	    if (this.currentTarget === Characteristic.SecuritySystemTargetState.NIGHT_ARM) {
+	    	this.setCurrentTarget(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
+	    	this.setCurrentState(Characteristic.SecuritySystemCurrentState.NIGHT_ARM);
+	    } else {
+	    	this.setCurrentTarget(Characteristic.SecuritySystemTargetState.AWAY_ARM);
+	    	this.setCurrentState(Characteristic.SecuritySystemCurrentState.AWAY_ARM);
+	    }
         }.bind(this));
         
         this.device.on(Arlo.DISARMED, function() {
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                .updateValue(Characteristic.SecuritySystemTargetState.DISARM);
-    
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                .updateValue(Characteristic.SecuritySystemCurrentState.DISARMED);
+	    if (this.currentTarget === Characteristic.SecuritySystemTargetState.STAY_ARM) {
+	    	this.setCurrentTarget(Characteristic.SecuritySystemTargetState.STAY_ARM);
+	    	this.setCurrentState(Characteristic.SecuritySystemCurrentState.STAY_ARM);
+	    } else {
+	    	this.setCurrentTarget(Characteristic.SecuritySystemTargetState.DISARM);
+	    	this.setCurrentState(Characteristic.SecuritySystemCurrentState.DISARMED);
+	    }
         }.bind(this));
-
-        if (this.STAY_ARM !== Arlo.ARMED) {
-            this.device.on(this.STAY_ARM, function() {
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                    .updateValue(Characteristic.SecuritySystemTargetState.STAY_ARM);
-        
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                    .updateValue(Characteristic.SecuritySystemCurrentState.STAY_ARM);
-            }.bind(this));
-        }
-
-        if (this.NIGHT_ARM !== Arlo.ARMED) {
-            this.device.on(this.NIGHT_ARM, function() {
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                    .updateValue(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
-        
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                    .updateValue(Characteristic.SecuritySystemCurrentState.NIGHT_ARM);
-            }.bind(this));
-        }
         
         setInterval(
             function(){
@@ -240,29 +210,49 @@ class ArloBaseStationAccessory {
         );
     }
 
+    setCurrentTarget(state) {
+        this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemTargetState)
+            .updateValue(state);
+	this.currentTarget = state;
+    }
+
+    setCurrentState(state) { 
+        this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+            .updateValue(state);
+	this.currentState = state;
+    }
+
     setTargetState(state, callback) {
         switch(state) {
             case Characteristic.SecuritySystemTargetState.AWAY_ARM:
                 this.device.arm(function() {
                     callback(null);
+		    this.currentTarget = Characteristic.SecuritySystemTargetState.AWAY_ARM;
                     this.device.emit(Arlo.ARMED);
                 }.bind(this));
                 break;
             case Characteristic.SecuritySystemTargetState.DISARM:
                 this.device.disarm(function() {
                     callback(null);
+		    this.currentTarget = Characteristic.SecuritySystemTargetState.DISARM;
                     this.device.emit(Arlo.DISARMED);
                 }.bind(this));
                 break;
             case Characteristic.SecuritySystemTargetState.STAY_ARM:
                 this.device.setMode(this.STAY_ARM, function() {
                     callback(null);
+		    this.currentTarget = Characteristic.SecuritySystemTargetState.STAY_ARM;
                     this.device.emit(this.STAY_ARM);
                 }.bind(this));
                 break;
             case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
                 this.device.setMode(this.NIGHT_ARM, function() {
                     callback(null);
+		    this.currentTarget = Characteristic.SecuritySystemTargetState.NIGHT_ARM;
                     this.device.emit(this.NIGHT_ARM);
                 }.bind(this));
                 break;

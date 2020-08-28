@@ -11,7 +11,7 @@
         "node": ">=6",
         "homebridge": ">=0.4.29"
     },
-  "keywords": [
+    "keywords": [
         "homebridge-plugin",
         "arlo"
     ],
